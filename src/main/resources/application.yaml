@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: HealEasy
+  datasource:
+    url: jdbc:postgresql://localhost:5432/healEasyApp
+    username: postgres
+    password: 270811OLC0802023
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    baseline-on-migrate: true
