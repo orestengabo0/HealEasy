@@ -3,6 +3,7 @@ package org.healeasy.entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "consultations")
@@ -18,9 +19,8 @@ public class Consultation {
     @Column(name = "notes")
     private String notes;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "prescription_id", nullable = true)
-    private Prescription prescription;
+    @OneToMany(mappedBy = "consultations", orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<Prescription> prescriptions;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

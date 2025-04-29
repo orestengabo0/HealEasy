@@ -19,6 +19,9 @@ public class Patient {
     @MapsId
     private User user;
 
+    @OneToMany(mappedBy = "patients", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments;
+
     @Column(name = "active_status")
     private Boolean activeStatus = true;
 
