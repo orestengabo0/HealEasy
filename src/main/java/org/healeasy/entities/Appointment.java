@@ -1,7 +1,6 @@
 package org.healeasy.entities;
 
 import jakarta.persistence.*;
-import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.Setter;
 import org.healeasy.enums.AppointmentStatus;
@@ -25,7 +24,7 @@ public class Appointment {
     @JoinColumn(name = "patient_id")
     private Patient patient;
 
-    @OneToOne(mappedBy = "appointments", cascade = { CascadeType.PERSIST, CascadeType.REMOVE }, orphanRemoval = true)
+    @OneToOne(mappedBy = "appointment", cascade = { CascadeType.PERSIST, CascadeType.REMOVE }, orphanRemoval = true)
     private Consultation consultation;
 
     @Column(name = "schedule_time")
@@ -34,5 +33,4 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AppointmentStatus status;
-
 }

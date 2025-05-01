@@ -28,6 +28,6 @@ public class Doctor {
     @Column(name = "consultation_fees")
     private Integer consultationFees;
 
-    @OneToMany(mappedBy = "doctors", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments;
 }

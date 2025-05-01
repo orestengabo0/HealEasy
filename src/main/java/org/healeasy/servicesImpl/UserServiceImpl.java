@@ -16,7 +16,6 @@ public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final String USER_DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
 
     public UserServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
@@ -49,6 +48,7 @@ public class UserServiceImpl implements IUserService {
         if (registerDTO.getProfileImage() != null) {
             user.setProfileImageUrl(registerDTO.getProfileImage().getAbsolutePath());
         } else {
+            String USER_DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
             user.setProfileImageUrl(USER_DEFAULT_AVATAR);
         }
         userRepository.save(user);
@@ -77,6 +77,8 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public String getUserRole(Long userId) {
-        return "";
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return user.getRole().name();
     }
 }

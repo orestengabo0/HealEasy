@@ -10,7 +10,7 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
-public class JwtProvider {
+public class JwtTokenProvider {
     private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private final long validityInMilliSeconds = 86400000; // 1 day in milliseconds
 

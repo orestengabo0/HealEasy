@@ -1,5 +1,5 @@
 package org.healeasy.enums;
 
-public enum UserRoles {
+public enum UserRole {
     PATIENT, DOCTOR, ADMIN
 }

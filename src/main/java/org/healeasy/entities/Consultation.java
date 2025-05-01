@@ -19,7 +19,7 @@ public class Consultation {
     @Column(name = "notes")
     private String notes;
 
-    @OneToMany(mappedBy = "consultations", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "consultation", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Prescription> prescriptions;
 
     @Column(name = "created_at", nullable = false, updatable = false)

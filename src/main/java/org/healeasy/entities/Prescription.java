@@ -22,7 +22,7 @@ public class Prescription {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consultation_id", nullable = true)
-    private Prescription prescription;
+    private Consultation consultation;
 
     @ManyToMany
     @JoinTable(

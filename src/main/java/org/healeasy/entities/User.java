@@ -3,7 +3,7 @@ package org.healeasy.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.healeasy.enums.UserRoles;
+import org.healeasy.enums.UserRole;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +17,7 @@ public class User {
     private Long id;
 
     @Column(name = "user_name")
-    private String name;
+    private String username;
 
     @Column(name = "email")
     private String email;
@@ -33,7 +33,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    private UserRoles role;
+    private UserRole role;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -44,5 +44,10 @@ public class User {
     @PrePersist
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate(){
+        this.updatedAt = LocalDateTime.now();
     }
 }

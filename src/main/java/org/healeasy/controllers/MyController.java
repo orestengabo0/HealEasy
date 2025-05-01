@@ -1,4 +1,4 @@
-package org.healeasy.Controllers;
+package org.healeasy.controllers;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

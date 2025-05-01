@@ -19,7 +19,7 @@ public class Patient {
     @MapsId
     private User user;
 
-    @OneToMany(mappedBy = "patients", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments;
 
     @Column(name = "active_status")
