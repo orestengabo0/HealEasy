@@ -19,7 +19,7 @@ public class User {
     @Column(name = "user_name")
     private String username;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
 
     @Column(name = "password")
@@ -28,11 +28,11 @@ public class User {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
+    @Column(name = "role", nullable = false)
     private UserRole role;
 
     @Column(name = "created_at")

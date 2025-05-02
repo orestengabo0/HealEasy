@@ -14,3 +14,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     baseline-on-migrate: true
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG

@@ -6,6 +6,8 @@ import org.healeasy.DTOs.UserRegisterDTO;
 import org.healeasy.DTOs.UserUpdatePasswordDTO;
 import org.healeasy.Iservices.IUserService;
 import org.healeasy.entities.User;
+import org.healeasy.exceptions.EmailAlreadyExistsException;
+import org.healeasy.exceptions.PhoneNumberAlreadyExistsException;
 import org.healeasy.repositories.UserRepository;
 import org.healeasy.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,20 +38,25 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public void register(UserRegisterDTO registerDTO) {
-        if(userRepository.existsByEmail(registerDTO.getEmail())){
-            throw new IllegalArgumentException("Email already exists");
+        if (userRepository.existsByEmail(registerDTO.getEmail())) {
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
+        if(userRepository.existsByPhoneNumber(registerDTO.getPhoneNumber())) {
+            throw new PhoneNumberAlreadyExistsException("Phone number already exists");
         }
         User user = new User();
         user.setUsername(registerDTO.getUsername());
         user.setEmail(registerDTO.getEmail());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setPhoneNumber(registerDTO.getPhoneNumber());
-        // Handle optional profile image
         if (registerDTO.getProfileImage() != null) {
             user.setProfileImageUrl(registerDTO.getProfileImage().getAbsolutePath());
         } else {
             String USER_DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
             user.setProfileImageUrl(USER_DEFAULT_AVATAR);
+        }
+        if(registerDTO.getRole() != null){
+            user.setRole(registerDTO.getRole());
         }
         userRepository.save(user);
     }

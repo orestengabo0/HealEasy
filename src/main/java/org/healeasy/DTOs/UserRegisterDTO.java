@@ -32,7 +32,6 @@ public class UserRegisterDTO {
             message = "Password must contain at least one uppercase letter, one number, and one special character.")
     private String password;
 
-
     @NotNull(message = "Role is required.")
     private UserRole role;
 }
