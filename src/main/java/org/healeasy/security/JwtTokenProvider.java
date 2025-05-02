@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.healeasy.entities.User;
+import org.healeasy.repositories.UserRepository;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -13,6 +15,11 @@ import java.util.Date;
 public class JwtTokenProvider {
     private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private final long validityInMilliSeconds = 86400000; // 1 day in milliseconds
+    private final UserRepository userRepository;
+
+    public JwtTokenProvider(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public String generateToken(String username){
         Date now = new Date();
@@ -45,5 +52,19 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
+    }
+
+    public Long getUserIdFromToken(String token){
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        String username = claims.getSubject();
+        User user = userRepository.findByUsername(username);
+        if(user != null){
+            return user.getId();
+        }
+        return null;
     }
 }

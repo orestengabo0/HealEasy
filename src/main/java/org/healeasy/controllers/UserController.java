@@ -30,14 +30,16 @@ public class UserController {
         return ResponseEntity.ok(token);
     }
 
-    @PutMapping(value = "/{userId}/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateProfile(@PathVariable Long userId, @Valid @ModelAttribute UserProfileUpdateDTO userProfileUpdateDTO) {
+    @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProfile(@Valid @ModelAttribute UserProfileUpdateDTO userProfileUpdateDTO) {
+        Long userId = userService.getAuthenticatedUserId();
         userService.updateProfile(userId, userProfileUpdateDTO);
         return ResponseEntity.ok("User profile updated successfully");
     }
 
-    @PutMapping("/{userId}/password")
-    public ResponseEntity<?> updatePassword(@PathVariable Long userId, @Valid @RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
+    @PutMapping("/password")
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
+        Long userId = userService.getAuthenticatedUserId();
         userService.updatePassword(userId, userUpdatePasswordDTO);
         return ResponseEntity.ok("User password updated successfully");
     }

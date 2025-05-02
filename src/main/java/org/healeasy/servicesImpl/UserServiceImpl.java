@@ -12,6 +12,8 @@ import org.healeasy.exceptions.PhoneNumberAlreadyExistsException;
 import org.healeasy.exceptions.UserNotFoundException;
 import org.healeasy.repositories.UserRepository;
 import org.healeasy.security.JwtTokenProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -120,5 +122,16 @@ public class UserServiceImpl implements IUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         return user.getRole().name();
+    }
+
+    @Override
+    public Long getAuthenticatedUserId(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null || !authentication.isAuthenticated()){
+            throw new IllegalStateException("No authenticated user found");
+        }
+
+        String username = authentication.getName();
+        return jwtTokenProvider.getUserIdFromToken(username);
     }
 }

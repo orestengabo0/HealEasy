@@ -11,4 +11,5 @@ public interface IUserService {
     void updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO);
     void updatePassword(Long userId, UserUpdatePasswordDTO userUpdatePasswordDTO);
     String getUserRole(Long userId);
+    Long getAuthenticatedUserId();
 }
