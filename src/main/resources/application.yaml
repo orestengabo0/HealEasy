@@ -8,12 +8,17 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     baseline-on-migrate: true
+  server:
+    multipart:
+        enabled: true
+        max-file-size: 5MB
+        max-request-size: 6MB
 logging:
   level:
     org:

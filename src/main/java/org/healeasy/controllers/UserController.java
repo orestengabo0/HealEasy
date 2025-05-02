@@ -6,6 +6,7 @@ import org.healeasy.DTOs.UserProfileUpdateDTO;
 import org.healeasy.DTOs.UserRegisterDTO;
 import org.healeasy.DTOs.UserUpdatePasswordDTO;
 import org.healeasy.Iservices.IUserService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +18,8 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody UserRegisterDTO userRegisterDTO) {
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> register(@Valid @ModelAttribute UserRegisterDTO userRegisterDTO) {
         userService.register(userRegisterDTO);
         return ResponseEntity.ok("User registered successfully");
     }
@@ -29,8 +30,8 @@ public class UserController {
         return ResponseEntity.ok(token);
     }
 
-    @PutMapping("/{userId}/profile")
-    public ResponseEntity<?> updateProfile(@PathVariable Long userId, @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO) {
+    @PutMapping(value = "/{userId}/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProfile(@PathVariable Long userId, @Valid @ModelAttribute UserProfileUpdateDTO userProfileUpdateDTO) {
         userService.updateProfile(userId, userProfileUpdateDTO);
         return ResponseEntity.ok("User profile updated successfully");
     }

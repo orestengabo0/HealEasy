@@ -7,29 +7,38 @@ import org.healeasy.DTOs.UserUpdatePasswordDTO;
 import org.healeasy.Iservices.IUserService;
 import org.healeasy.entities.User;
 import org.healeasy.exceptions.EmailAlreadyExistsException;
+import org.healeasy.exceptions.FailedToUploadImageException;
 import org.healeasy.exceptions.PhoneNumberAlreadyExistsException;
+import org.healeasy.exceptions.UserNotFoundException;
 import org.healeasy.repositories.UserRepository;
 import org.healeasy.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 
 @Service
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CloudinaryServiceImpl cloudinaryServiceImpl;
 
     public UserServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
-                           JwtTokenProvider jwtTokenProvider) {
+                           JwtTokenProvider jwtTokenProvider, CloudinaryServiceImpl cloudinaryServiceImpl) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.cloudinaryServiceImpl = cloudinaryServiceImpl;
     }
 
     @Override
     public String login(UserLoginDTO loginDTO) {
         User user = userRepository.findByUsernameOrEmail(loginDTO.getUsername(), loginDTO.getEmail());
+        if(user == null){
+            throw new UserNotFoundException("User not found.");
+        }
         if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())){
             throw new IllegalArgumentException("Invalid username, email or password");
         }
@@ -50,7 +59,12 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setPhoneNumber(registerDTO.getPhoneNumber());
         if (registerDTO.getProfileImage() != null) {
-            user.setProfileImageUrl(registerDTO.getProfileImage().getAbsolutePath());
+            try{
+                String imageUrl = cloudinaryServiceImpl.uploadImage(registerDTO.getProfileImage());
+                user.setProfileImageUrl(imageUrl);
+            } catch (IOException e) {
+                throw new FailedToUploadImageException("Failed to upload image.");
+            }
         } else {
             String USER_DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
             user.setProfileImageUrl(USER_DEFAULT_AVATAR);
@@ -67,7 +81,26 @@ public class UserServiceImpl implements IUserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         if(userProfileUpdateDTO.getUsername() != null) user.setUsername(userProfileUpdateDTO.getUsername());
         if(userProfileUpdateDTO.getEmail() != null) user.setEmail(userProfileUpdateDTO.getEmail());
-        if(userProfileUpdateDTO.getProfileImage() != null) user.setProfileImageUrl(userProfileUpdateDTO.getProfileImage());
+        if (userProfileUpdateDTO.getProfileImage() != null) {
+            if (user.getProfileImageUrl() != null && user.getProfileImageUrl().contains("cloudinary")) {
+                try{
+                    // Delete old image if it exists
+                    String publicId = user.getProfileImageUrl().substring(user.getProfileImageUrl().lastIndexOf("/") + 1).split("\\.")[0];
+                    cloudinaryServiceImpl.deleteImage(publicId);
+
+                }catch(IOException ex){
+                    throw new FailedToUploadImageException("Failed to delete image.");
+                }
+            }
+            try {
+                // Upload new image
+                String newImageUrl = cloudinaryServiceImpl.uploadImage(userProfileUpdateDTO.getProfileImage());
+                user.setProfileImageUrl(newImageUrl);
+            }catch (IOException ex){
+                throw new FailedToUploadImageException("Failed to upload image.");
+            }
+
+        }
         userRepository.save(user);
     }
 
