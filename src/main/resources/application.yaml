@@ -20,10 +20,11 @@ spring:
         enabled: true
         max-file-size: 5MB
         max-request-size: 6MB
+  jwt:
+    accessTokenExpiration: 600
+    refreshTokenExpiration: 604800
 logging:
   level:
     org:
       springframework:
         security: DEBUG
-jwt:
-  secret-key: T3Jlc3RlTkJhc2U2NExpdmVFbmNvZGVySGVhbEVhc3k=

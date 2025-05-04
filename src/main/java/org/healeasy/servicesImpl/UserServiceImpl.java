@@ -1,47 +1,65 @@
 package org.healeasy.servicesImpl;
 
-import org.healeasy.DTOs.UserLoginDTO;
-import org.healeasy.DTOs.UserProfileUpdateDTO;
-import org.healeasy.DTOs.UserRegisterDTO;
-import org.healeasy.DTOs.UserUpdatePasswordDTO;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import org.healeasy.DTOs.*;
 import org.healeasy.Iservices.IUserService;
+import org.healeasy.config.JwtConfig;
 import org.healeasy.entities.User;
 import org.healeasy.exceptions.*;
 import org.healeasy.repositories.UserRepository;
 import org.healeasy.security.JwtTokenProvider;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @Service
+@AllArgsConstructor
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final CloudinaryServiceImpl cloudinaryServiceImpl;
-
-    public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder,
-                           JwtTokenProvider jwtTokenProvider, CloudinaryServiceImpl cloudinaryServiceImpl) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.cloudinaryServiceImpl = cloudinaryServiceImpl;
-    }
+    private final AuthenticationManager authenticationManager;
+    private final JwtConfig jwtConfig;
 
     @Override
-    public String login(UserLoginDTO loginDTO) {
-        User user = userRepository.findByUsernameOrEmail(loginDTO.getUsername(), loginDTO.getEmail());
-        if(user == null){
+    public String login(UserLoginDTO loginDTO, HttpServletResponse response) {
+        // Create authentication token
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(
+                        loginDTO.getUsername() != null ? loginDTO.getUsername() : loginDTO.getEmail(),
+                        loginDTO.getPassword()
+                );
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        User user = userRepository.findByUsername(loginDTO.getUsername());
+        if (user == null) {
             throw new UserNotFoundException("User not found.");
         }
-        if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())){
-            throw new InvalidCredentialsException("Invalid username, email or password");
-        }
-        return jwtTokenProvider.generateToken(user.getUsername());
+        var accessToken = jwtTokenProvider.generateAccessToken(user);
+        var refreshToken = jwtTokenProvider.generateRefreshToken(user);
+
+        // Store refresh token in the HttpOnly cookie
+        var cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/auth/refresh")
+                .maxAge(Duration.parse(jwtConfig.getRefreshTokenExpiration()))
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return accessToken;
     }
 
     @Override
@@ -75,7 +93,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO) {
+    public User updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(userProfileUpdateDTO.getUsername() != null) user.setUsername(userProfileUpdateDTO.getUsername());
@@ -101,6 +119,7 @@ public class UserServiceImpl implements IUserService {
 
         }
         userRepository.save(user);
+        return user;
     }
 
     @Override

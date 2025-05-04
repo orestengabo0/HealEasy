@@ -1,22 +1,27 @@
 package org.healeasy.controllers;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.healeasy.DTOs.UserLoginDTO;
-import org.healeasy.DTOs.UserProfileUpdateDTO;
-import org.healeasy.DTOs.UserRegisterDTO;
-import org.healeasy.DTOs.UserUpdatePasswordDTO;
+import lombok.AllArgsConstructor;
+import org.healeasy.DTOs.*;
 import org.healeasy.Iservices.IUserService;
+import org.healeasy.mappers.UserMapper;
+import org.healeasy.repositories.UserRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@AllArgsConstructor
 public class UserController {
     private final IUserService userService;
-    public UserController(IUserService userService) {
-        this.userService = userService;
-    }
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> register(@Valid @ModelAttribute UserRegisterDTO userRegisterDTO) {
@@ -25,16 +30,17 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
-        String token = userService.login(userLoginDTO);
-        return ResponseEntity.ok(token);
+    public ResponseEntity<JwtResponse> login(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse response) {
+        String token = userService.login(userLoginDTO, response);
+        return ResponseEntity.ok(new JwtResponse(token));
     }
 
     @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateProfile(@Valid @ModelAttribute UserProfileUpdateDTO userProfileUpdateDTO) {
+    public ResponseEntity<UserDTO> updateProfile(@Valid @ModelAttribute UserProfileUpdateDTO userProfileUpdateDTO) {
         Long userId = userService.getAuthenticatedUserId();
-        userService.updateProfile(userId, userProfileUpdateDTO);
-        return ResponseEntity.ok("User profile updated successfully");
+        var user = userService.updateProfile(userId, userProfileUpdateDTO);
+        var userDto = userMapper.toDto(user);
+        return ResponseEntity.ok(userDto);
     }
 
     @PutMapping("/password")
@@ -48,5 +54,14 @@ public class UserController {
     public ResponseEntity<?> getUserRole(@PathVariable Long userId){
         String role = userService.getUserRole(userId);
         return ResponseEntity.ok(role);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> me(){
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        var userId = (Long) authentication.getPrincipal();
+        var user = userRepository.findById(userId).orElseThrow();
+        var userDto = userMapper.toDto(user);
+        return ResponseEntity.ok(userDto);
     }
 }

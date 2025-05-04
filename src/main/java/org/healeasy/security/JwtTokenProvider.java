@@ -1,60 +1,67 @@
 package org.healeasy.security;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.AllArgsConstructor;
+import org.healeasy.config.JwtConfig;
 import org.healeasy.entities.User;
-import org.healeasy.exceptions.UserNotFoundException;
-import org.healeasy.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
+@AllArgsConstructor
 @Component
 public class JwtTokenProvider {
-    private final Key secretKey;
-    private final long validityInMilliSeconds = 86400000; // 1 day in milliseconds
+    private static final Dotenv dotenv = Dotenv.configure().load();
+    private final JwtConfig jwtConfig;
 
-    public JwtTokenProvider(@Value("${jwt.secret-key}") String base64SecretKey){
-        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64SecretKey));
+    public String generateAccessToken(User user) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + jwtConfig.getAccessTokenExpiration());
+
+        return generateToken(user, now, validity);
     }
 
-    public String generateToken(String username){
+    public String generateRefreshToken(User user) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliSeconds);
+        Date validity = new Date(now.getTime() + jwtConfig.getRefreshTokenExpiration());
 
+        return generateToken(user, now, validity);
+    }
+
+    private static String generateToken(User user, Date now, Date validity) {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(user.getId().toString())
+                .claim("username", user.getUsername())
+                .claim("email", user.getEmail())
+                .claim("phoneNumber", user.getPhoneNumber())
                 .setIssuedAt(now)
                 .setExpiration(validity)
-                .signWith(secretKey)
+                .signWith(Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET_KEY").getBytes()))
                 .compact();
     }
 
     public boolean validateToken(String token) {
-        try{
-            Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        }catch(Exception e){
+        try {
+            var claims = getClaims(token);
+            return claims.getExpiration().after(new Date());
+        }catch (JwtException ex){
             return false;
         }
     }
 
-    public String getUsernameFromToken(String token){
-        System.out.println("token = " + token);
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET_KEY").getBytes()))
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        return Long.valueOf(getClaims(token).getSubject());
     }
 }

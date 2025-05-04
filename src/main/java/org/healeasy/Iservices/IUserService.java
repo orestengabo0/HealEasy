@@ -1,14 +1,13 @@
 package org.healeasy.Iservices;
 
-import org.healeasy.DTOs.UserLoginDTO;
-import org.healeasy.DTOs.UserProfileUpdateDTO;
-import org.healeasy.DTOs.UserRegisterDTO;
-import org.healeasy.DTOs.UserUpdatePasswordDTO;
+import jakarta.servlet.http.HttpServletResponse;
+import org.healeasy.DTOs.*;
+import org.healeasy.entities.User;
 
 public interface IUserService {
-    String login(UserLoginDTO loginDTO);
+    String login(UserLoginDTO loginDTO, HttpServletResponse response);
     void register(UserRegisterDTO registerDTO);
-    void updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO);
+    User updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO);
     void updatePassword(Long userId, UserUpdatePasswordDTO userUpdatePasswordDTO);
     String getUserRole(Long userId);
     Long getAuthenticatedUserId();
