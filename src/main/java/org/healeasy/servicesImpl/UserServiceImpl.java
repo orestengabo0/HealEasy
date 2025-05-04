@@ -132,6 +132,10 @@ public class UserServiceImpl implements IUserService {
         }
 
         String username = authentication.getName();
-        return jwtTokenProvider.getUserIdFromToken(username);
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UserNotFoundException("User not found");
+        }
+        return user.getId();
     }
 }

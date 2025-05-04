@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.healeasy.entities.User;
+import org.healeasy.exceptions.UserNotFoundException;
 import org.healeasy.repositories.UserRepository;
 import org.springframework.stereotype.Component;
 
@@ -46,25 +47,12 @@ public class JwtTokenProvider {
     }
 
     public String getUsernameFromToken(String token){
+        System.out.println("token = " + token);
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
-    }
-
-    public Long getUserIdFromToken(String token){
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        String username = claims.getSubject();
-        User user = userRepository.findByUsername(username);
-        if(user != null){
-            return user.getId();
-        }
-        return null;
     }
 }
