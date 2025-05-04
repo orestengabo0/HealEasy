@@ -25,3 +25,5 @@ logging:
     org:
       springframework:
         security: DEBUG
+jwt:
+  secret-key: T3Jlc3RlTkJhc2U2NExpdmVFbmNvZGVySGVhbEVhc3k=

@@ -3,23 +3,25 @@ package org.healeasy.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.healeasy.entities.User;
 import org.healeasy.exceptions.UserNotFoundException;
 import org.healeasy.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-    private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final Key secretKey;
     private final long validityInMilliSeconds = 86400000; // 1 day in milliseconds
-    private final UserRepository userRepository;
 
-    public JwtTokenProvider(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public JwtTokenProvider(@Value("${jwt.secret-key}") String base64SecretKey){
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64SecretKey));
     }
 
     public String generateToken(String username){

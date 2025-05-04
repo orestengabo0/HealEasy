@@ -6,10 +6,7 @@ import org.healeasy.DTOs.UserRegisterDTO;
 import org.healeasy.DTOs.UserUpdatePasswordDTO;
 import org.healeasy.Iservices.IUserService;
 import org.healeasy.entities.User;
-import org.healeasy.exceptions.EmailAlreadyExistsException;
-import org.healeasy.exceptions.FailedToUploadImageException;
-import org.healeasy.exceptions.PhoneNumberAlreadyExistsException;
-import org.healeasy.exceptions.UserNotFoundException;
+import org.healeasy.exceptions.*;
 import org.healeasy.repositories.UserRepository;
 import org.healeasy.security.JwtTokenProvider;
 import org.springframework.security.core.Authentication;
@@ -42,7 +39,7 @@ public class UserServiceImpl implements IUserService {
             throw new UserNotFoundException("User not found.");
         }
         if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())){
-            throw new IllegalArgumentException("Invalid username, email or password");
+            throw new InvalidCredentialsException("Invalid username, email or password");
         }
         return jwtTokenProvider.generateToken(user.getUsername());
     }
@@ -80,7 +77,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(userProfileUpdateDTO.getUsername() != null) user.setUsername(userProfileUpdateDTO.getUsername());
         if(userProfileUpdateDTO.getEmail() != null) user.setEmail(userProfileUpdateDTO.getEmail());
         if (userProfileUpdateDTO.getProfileImage() != null) {
@@ -109,9 +106,9 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void updatePassword(Long userId, UserUpdatePasswordDTO userUpdatePasswordDTO) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(!passwordEncoder.matches(userUpdatePasswordDTO.getOldPassword(), user.getPassword())){
-            throw new IllegalArgumentException("Invalid old password");
+            throw new InvalidCredentialsException("Invalid old password");
         }
         user.setPassword(passwordEncoder.encode(userUpdatePasswordDTO.getNewPassword()));
         userRepository.save(user);
@@ -120,7 +117,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public String getUserRole(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         return user.getRole().name();
     }
 
@@ -128,7 +125,7 @@ public class UserServiceImpl implements IUserService {
     public Long getAuthenticatedUserId(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(authentication == null || !authentication.isAuthenticated()){
-            throw new IllegalStateException("No authenticated user found");
+            throw new UserNotFoundException("No authenticated user found");
         }
 
         String username = authentication.getName();
