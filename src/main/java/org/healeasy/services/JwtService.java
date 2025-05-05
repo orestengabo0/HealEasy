@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.AllArgsConstructor;
 import org.healeasy.config.JwtConfig;
 import org.healeasy.entities.User;
+import org.healeasy.enums.UserRole;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -18,39 +19,33 @@ public class JwtService {
     private static final Dotenv dotenv = Dotenv.configure().load();
     private final JwtConfig jwtConfig;
 
-    public String generateAccessToken(User user) {
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + jwtConfig.getAccessTokenExpiration().toMillis());
-
-        return generateToken(user, now, validity);
+    public Jwt generateAccessToken(User user) {
+        return generateToken(user, jwtConfig.getAccessTokenExpiration());
     }
 
-    public String generateRefreshToken(User user) {
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + jwtConfig.getRefreshTokenExpiration().toMillis());
-
-        return generateToken(user, now, validity);
+    public Jwt generateRefreshToken(User user) {
+        return generateToken(user, jwtConfig.getRefreshTokenExpiration());
     }
 
-    private static String generateToken(User user, Date now, Date validity) {
-        return Jwts.builder()
-                .setSubject(user.getId().toString())
-                .claim("username", user.getUsername())
-                .claim("email", user.getEmail())
-                .claim("phoneNumber", user.getPhoneNumber())
-                .claim("role", user.getRole())
-                .setIssuedAt(now)
-                .setExpiration(validity)
-                .signWith(Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET_KEY").getBytes()))
-                .compact();
+    private static Jwt generateToken(User user, long tokenExpiration) {
+        var claims = Jwts.claims()
+                .subject(user.getId().toString())
+                .add("username", user.getUsername())
+                .add("email", user.getEmail())
+                .add("phoneNumber", user.getPhoneNumber())
+                .add("role", user.getRole())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 1000 * tokenExpiration))
+                .build();
+        return new Jwt(claims, Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET_KEY").getBytes()));
     }
 
-    public boolean validateToken(String token) {
-        try {
+    public Jwt parseToken(String token){
+        try{
             var claims = getClaims(token);
-            return claims.getExpiration().after(new Date());
-        }catch (JwtException ex){
-            return false;
+            return new Jwt(claims, Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET_KEY").getBytes()));
+        }catch (JwtException e){
+            return null;
         }
     }
 
@@ -60,9 +55,5 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    public Long getUserIdFromToken(String token) {
-        return Long.valueOf(getClaims(token).getSubject());
     }
 }

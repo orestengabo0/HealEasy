@@ -47,7 +47,7 @@ public class UserServiceImpl implements IUserService {
         var refreshToken = jwtService.generateRefreshToken(user);
 
         // Store refresh token in the HttpOnly cookie
-        var cookie = ResponseCookie.from("refreshToken", refreshToken)
+        var cookie = ResponseCookie.from("refreshToken", refreshToken.toString())
                 .httpOnly(true)
                 .secure(true)
                 .path("/auth/refresh")
@@ -56,7 +56,7 @@ public class UserServiceImpl implements IUserService {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return accessToken;
+        return accessToken.toString();
     }
 
     @Override
@@ -135,20 +135,5 @@ public class UserServiceImpl implements IUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         return user.getRole().name();
-    }
-
-    @Override
-    public Long getAuthenticatedUserId(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication == null || !authentication.isAuthenticated()){
-            throw new UserNotFoundException("No authenticated user found");
-        }
-
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new UserNotFoundException("User not found");
-        }
-        return user.getId();
     }
 }
