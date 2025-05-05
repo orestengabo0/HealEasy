@@ -21,7 +21,7 @@ spring:
         max-file-size: 5MB
         max-request-size: 6MB
   jwt:
-    accessTokenExpiration: 600
+    accessTokenExpiration: 900
     refreshTokenExpiration: 604800
 logging:
   level:

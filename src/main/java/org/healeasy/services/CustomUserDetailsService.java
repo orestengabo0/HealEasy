@@ -1,4 +1,4 @@
-package org.healeasy.servicesImpl;
+package org.healeasy.services;
 
 import lombok.AllArgsConstructor;
 import org.healeasy.entities.User;

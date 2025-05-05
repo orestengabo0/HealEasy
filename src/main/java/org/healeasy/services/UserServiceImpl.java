@@ -1,6 +1,5 @@
-package org.healeasy.servicesImpl;
+package org.healeasy.services;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.healeasy.DTOs.*;
@@ -9,7 +8,6 @@ import org.healeasy.config.JwtConfig;
 import org.healeasy.entities.User;
 import org.healeasy.exceptions.*;
 import org.healeasy.repositories.UserRepository;
-import org.healeasy.security.JwtTokenProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,14 +18,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.time.Duration;
 
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtService jwtService;
     private final CloudinaryServiceImpl cloudinaryServiceImpl;
     private final AuthenticationManager authenticationManager;
     private final JwtConfig jwtConfig;
@@ -46,15 +43,15 @@ public class UserServiceImpl implements IUserService {
         if (user == null) {
             throw new UserNotFoundException("User not found.");
         }
-        var accessToken = jwtTokenProvider.generateAccessToken(user);
-        var refreshToken = jwtTokenProvider.generateRefreshToken(user);
+        var accessToken = jwtService.generateAccessToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
 
         // Store refresh token in the HttpOnly cookie
         var cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)
                 .path("/auth/refresh")
-                .maxAge(Duration.parse(jwtConfig.getRefreshTokenExpiration()))
+                .maxAge(jwtConfig.getRefreshTokenExpiration())
                 .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

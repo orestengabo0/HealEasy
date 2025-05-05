@@ -1,4 +1,4 @@
-package org.healeasy.security;
+package org.healeasy.services;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
@@ -14,20 +14,20 @@ import java.util.Date;
 
 @AllArgsConstructor
 @Component
-public class JwtTokenProvider {
+public class JwtService {
     private static final Dotenv dotenv = Dotenv.configure().load();
     private final JwtConfig jwtConfig;
 
     public String generateAccessToken(User user) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + jwtConfig.getAccessTokenExpiration());
+        Date validity = new Date(now.getTime() + jwtConfig.getAccessTokenExpiration().toMillis());
 
         return generateToken(user, now, validity);
     }
 
     public String generateRefreshToken(User user) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + jwtConfig.getRefreshTokenExpiration());
+        Date validity = new Date(now.getTime() + jwtConfig.getRefreshTokenExpiration().toMillis());
 
         return generateToken(user, now, validity);
     }
@@ -38,6 +38,7 @@ public class JwtTokenProvider {
                 .claim("username", user.getUsername())
                 .claim("email", user.getEmail())
                 .claim("phoneNumber", user.getPhoneNumber())
+                .claim("role", user.getRole())
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(Keys.hmacShaKeyFor(dotenv.get("JWT_SECRET_KEY").getBytes()))

@@ -1,4 +1,4 @@
-package org.healeasy.security;
+package org.healeasy.services;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,12 +14,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-public class JwtAuthFilter extends OncePerRequestFilter {
-    private final JwtTokenProvider jwtTokenProvider;
+public class JwtAuthFilterService extends OncePerRequestFilter {
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
-    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService) {
-        this.jwtTokenProvider = jwtTokenProvider;
+    public JwtAuthFilterService(JwtService jwtService, UserDetailsService userDetailsService) {
+        this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
 
@@ -40,12 +40,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.replace("Bearer ", "");
-        if(!jwtTokenProvider.validateToken(token)){
+        if(!jwtService.validateToken(token)){
             filterChain.doFilter(request, response);
         }
 
         var authentication = new UsernamePasswordAuthenticationToken(
-                jwtTokenProvider.getUserIdFromToken(token),
+                jwtService.getUserIdFromToken(token),
                 null,
                 null
         );
