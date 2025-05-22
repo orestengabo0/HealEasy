@@ -60,7 +60,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void register(UserRegisterDTO registerDTO) {
+    public User register(UserRegisterDTO registerDTO) {
         if (userRepository.existsByEmail(registerDTO.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
@@ -73,6 +73,10 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setPhoneNumber(registerDTO.getPhoneNumber());
         if (registerDTO.getProfileImage() != null) {
+            if(registerDTO.getProfileImage().getSize() > cloudinaryServiceImpl
+                    .extractMBsFromStrSize(cloudinaryServiceImpl.getMaxFileSize())){
+                throw new LargeFileException("Large file size exceeded");
+            }
             try{
                 String imageUrl = cloudinaryServiceImpl.uploadImage(registerDTO.getProfileImage());
                 user.setProfileImageUrl(imageUrl);
@@ -83,10 +87,8 @@ public class UserServiceImpl implements IUserService {
             String USER_DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
             user.setProfileImageUrl(USER_DEFAULT_AVATAR);
         }
-        if(registerDTO.getRole() != null){
-            user.setRole(registerDTO.getRole());
-        }
         userRepository.save(user);
+        return user;
     }
 
     @Override
@@ -97,6 +99,10 @@ public class UserServiceImpl implements IUserService {
         if(userProfileUpdateDTO.getEmail() != null) user.setEmail(userProfileUpdateDTO.getEmail());
         if (userProfileUpdateDTO.getProfileImage() != null) {
             if (user.getProfileImageUrl() != null && user.getProfileImageUrl().contains("cloudinary")) {
+                if(userProfileUpdateDTO.getProfileImage().getSize() > cloudinaryServiceImpl
+                        .extractMBsFromStrSize(cloudinaryServiceImpl.getMaxFileSize())){
+                    throw new LargeFileException("Large file size exceeded");
+                }
                 try{
                     // Delete old image if it exists
                     String publicId = user.getProfileImageUrl().substring(user.getProfileImageUrl().lastIndexOf("/") + 1).split("\\.")[0];

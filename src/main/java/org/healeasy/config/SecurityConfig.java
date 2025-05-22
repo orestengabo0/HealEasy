@@ -52,23 +52,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-       http
-               .sessionManagement( s ->
-                       s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-               .csrf(AbstractHttpConfigurer::disable)
-               .authorizeHttpRequests(auth -> auth
-                       .requestMatchers("/api/v1/auth/**").permitAll()
-                       .anyRequest().authenticated()
-               )
-               .addFilterBefore(jwtAuthFilterService, UsernamePasswordAuthenticationFilter.class)
-               .exceptionHandling(c -> {
-                   c.authenticationEntryPoint(
-                           new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
-                   );
-                   c.accessDeniedHandler((request, response, accessDeniedException) -> {
-                       response.setStatus(HttpStatus.FORBIDDEN.value());
-                   });
-               });
+        http
+                .sessionManagement( s ->
+                        s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/register").permitAll()
+                        .anyRequest().authenticated()                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthFilterService, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(c -> {
+                    c.authenticationEntryPoint(
+                            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+                    );
+                    c.accessDeniedHandler((request, response, accessDeniedException) -> {
+                        response.setStatus(HttpStatus.FORBIDDEN.value());
+                    });
+                }).authenticationProvider(authenticationProvider());
         return http.build();
     }
 

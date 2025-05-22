@@ -2,28 +2,20 @@ package org.healeasy.config;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Service
-public class CloudinaryService {
+@Configuration
+public class CloudinaryConfig {
+    Dotenv dotenv = Dotenv.configure().load();
 
-    @Value("${spring.cloudinary.name}")
-    private String cloudName;
-
-    @Value("${spring.cloudinary.api-key}")
-    private String apiKey;
-
-    @Value("${spring.cloudinary.api-secret}")
-    private String apiSecret;
-
-    @PostConstruct
-    public void init() {
-        Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", cloudName,
-                "api_key", apiKey,
-                "api_secret", apiSecret,
+    @Bean
+    public Cloudinary cloudinary() {
+        return new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", dotenv.get("CLOUDINARY_CLOUD_NAME"),
+                "api_key", dotenv.get("CLOUDINARY_API_KEY"),
+                "api_secret", dotenv.get("CLOUDINARY_API_SECRET"),
                 "secure", true
         ));
     }

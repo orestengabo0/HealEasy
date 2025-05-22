@@ -43,6 +43,7 @@ public class User {
 
     @PrePersist
     protected void onCreate(){
+        this.role = UserRole.PATIENT;
         this.createdAt = LocalDateTime.now();
     }
 

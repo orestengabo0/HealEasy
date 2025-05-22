@@ -1,5 +1,6 @@
 package org.healeasy.exceptions;
 
+import org.healeasy.DTOs.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -56,5 +57,11 @@ public class GlobalExceptionalHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<String> handleInvalidCredentials(InvalidCredentialsException ex){
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RequestSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRequestSizeExceed(RequestSizeExceededException ex){
+        ErrorResponse error = new ErrorResponse(HttpStatus.PAYLOAD_TOO_LARGE.value(), ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 }
