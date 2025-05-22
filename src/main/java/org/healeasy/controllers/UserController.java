@@ -1,5 +1,6 @@
 package org.healeasy.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -8,10 +9,13 @@ import org.healeasy.Iservices.IUserService;
 import org.healeasy.entities.User;
 import org.healeasy.exceptions.FailedToUploadImageException;
 import org.healeasy.exceptions.InvalidCredentialsException;
+import org.healeasy.exceptions.RequestSizeExceededException;
 import org.healeasy.exceptions.UserNotFoundException;
 import org.healeasy.mappers.UserMapper;
 import org.healeasy.repositories.UserRepository;
+import org.healeasy.services.CloudinaryServiceImpl;
 import org.healeasy.services.JwtService;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +31,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final JwtService jwtService;
+    private final CloudinaryServiceImpl cloudinaryServiceImpl;
 
     // Helper method to get authenticated user ID
     private Long getAuthenticatedUserId() {
@@ -50,9 +55,14 @@ public class UserController {
     }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> register(@Valid @ModelAttribute UserRegisterDTO userRegisterDTO) {
-        userService.register(userRegisterDTO);
-        return ResponseEntity.ok("User registered successfully");
+    public ResponseEntity<UserDTO> register(@Valid @ModelAttribute UserRegisterDTO userRegisterDTO, HttpServletRequest request) {
+        if(request.getContentLengthLong() > cloudinaryServiceImpl.extractMBsFromStrSize(
+                cloudinaryServiceImpl.getMaxRequestSize()
+        )){
+            throw new RequestSizeExceededException("Request size exceeded 6MB limit.");
+        }
+        User registeredUser = userService.register(userRegisterDTO);
+        return ResponseEntity.ok(userMapper.toDto(registeredUser));
     }
 
     @PostMapping("/login")
