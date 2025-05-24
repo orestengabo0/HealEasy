@@ -31,20 +31,6 @@ public class UserDataSeeder {
     private static final String DEFAULT_AVATAR_URL = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png";
 
     /**
-     * CommandLineRunner bean that seeds the database with fake user data.
-     * This is disabled by default to avoid accidentally seeding production data.
-     * Use the seedUsers() method to manually trigger seeding.
-     * 
-     * @return CommandLineRunner that seeds the database
-     */
-    //@Bean
-    public CommandLineRunner seedDatabase() {
-        return args -> {
-            seedUsers(100);
-        };
-    }
-
-    /**
      * Seeds the database with the specified number of fake users.
      * This method can be called from a controller endpoint to manually trigger seeding.
      * 
