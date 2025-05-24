@@ -8,6 +8,6 @@ public interface IUserService {
     String login(UserLoginDTO loginDTO, HttpServletResponse response);
     User register(UserRegisterDTO registerDTO);
     User updateProfile(Long userId, UserProfileUpdateDTO userProfileUpdateDTO);
-    void updatePassword(Long userId, UserUpdatePasswordDTO userUpdatePasswordDTO);
+    void updatePassword(Long userId, UpdatePasswordDto updatePasswordDto);
     String getUserRole(Long userId);
 }

@@ -11,6 +11,7 @@ import org.healeasy.repositories.UserRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,35 +29,63 @@ public class UserServiceImpl implements IUserService {
     private final CloudinaryServiceImpl cloudinaryServiceImpl;
     private final AuthenticationManager authenticationManager;
     private final JwtConfig jwtConfig;
+    private final PasswordService passwordService;
 
     @Override
     public String login(UserLoginDTO loginDTO, HttpServletResponse response) {
-        // Create authentication token
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(
-                        loginDTO.getUsername() != null ? loginDTO.getUsername() : loginDTO.getEmail(),
-                        loginDTO.getPassword()
-                );
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        User user = userRepository.findByUsername(loginDTO.getUsername());
-        if (user == null) {
-            throw new UserNotFoundException("User not found.");
+        // 1. Input validation
+        if ((loginDTO.getUsername() == null && loginDTO.getEmail() == null) ||
+                loginDTO.getPassword() == null) {
+            throw new IllegalArgumentException("Username/email and password are required");
         }
-        var accessToken = jwtService.generateAccessToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
 
-        // Store refresh token in the HttpOnly cookie
-        var cookie = ResponseCookie.from("refreshToken", refreshToken.toString())
+        try {
+            // 2. Authentication
+            String loginIdentifier = loginDTO.getUsername() != null ?
+                    loginDTO.getUsername() : loginDTO.getEmail();
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginIdentifier,
+                            loginDTO.getPassword()
+                    )
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 3. Find user (more efficient single query)
+            User user = userRepository.findByUsernameOrEmail(
+                    loginDTO.getUsername(),
+                    loginDTO.getEmail()
+            );
+
+            if (user == null) {
+                throw new UserNotFoundException("User not found");
+            }
+
+            // 4. Generate tokens
+            var accessToken = jwtService.generateAccessToken(user);
+            var refreshToken = jwtService.generateRefreshToken(user);
+
+            // 5. Set secure cookie
+            setRefreshTokenCookie(response, refreshToken.toString());
+
+            return accessToken.toString();
+
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException("Invalid username/email or password");
+        }
+    }
+
+    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(true)
-                .path("/auth/refresh")
+                .secure(true) // In production, set to true (requires HTTPS)
+                .path("/api/v1/auth/refresh")
                 .maxAge(jwtConfig.getRefreshTokenExpiration())
-                .sameSite("Lax")
+                .sameSite("Lax") // or "Strict" for better security
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        return accessToken.toString();
     }
 
     @Override
@@ -126,15 +155,9 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void updatePassword(Long userId, UserUpdatePasswordDTO userUpdatePasswordDTO) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-        if(!passwordEncoder.matches(userUpdatePasswordDTO.getOldPassword(), user.getPassword())){
-            throw new InvalidCredentialsException("Invalid old password");
-        }
-        user.setPassword(passwordEncoder.encode(userUpdatePasswordDTO.getNewPassword()));
-        userRepository.save(user);
-        }
+    public void updatePassword(Long userId, UpdatePasswordDto updatePasswordDto) {
+        passwordService.updateUserPassword(userId, updatePasswordDto);
+    }
 
     @Override
     public String getUserRole(Long userId) {

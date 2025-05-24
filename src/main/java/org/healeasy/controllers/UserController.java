@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.healeasy.DTOs.*;
 import org.healeasy.Iservices.IUserService;
 import org.healeasy.entities.User;
@@ -15,7 +16,6 @@ import org.healeasy.mappers.UserMapper;
 import org.healeasy.repositories.UserRepository;
 import org.healeasy.services.CloudinaryServiceImpl;
 import org.healeasy.services.JwtService;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +34,7 @@ public class UserController {
     private final CloudinaryServiceImpl cloudinaryServiceImpl;
 
     // Helper method to get authenticated user ID
-    private Long getAuthenticatedUserId() {
+    protected Long getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null ||
                 "anonymousUser".equals(authentication.getPrincipal())) {
@@ -84,10 +84,10 @@ public class UserController {
     }
 
     @PutMapping("/password")
-    public ResponseEntity<?> updatePassword(@Valid @RequestBody UserUpdatePasswordDTO userUpdatePasswordDTO) {
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody UpdatePasswordDto updatePasswordDto) {
         try {
             User user = getAuthenticatedUser();
-            userService.updatePassword(user.getId(), userUpdatePasswordDTO);
+            userService.updatePassword(user.getId(), updatePasswordDto);
             return ResponseEntity.ok("User password updated successfully");
         } catch (InvalidCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
@@ -115,8 +115,35 @@ public class UserController {
         }
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile() {
+        try {
+            User user = getAuthenticatedUser();
+            return ResponseEntity.ok(userMapper.toDto(user));
+        } catch (InvalidCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/refresh")
-    public ResponseEntity<JwtResponse> refresh(@CookieValue(value = "refreshToken") String refreshToken) {
+    public ResponseEntity<JwtResponse> refresh(HttpServletRequest request, @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+        // If the cookie wasn't found with the @CookieValue annotation, try to extract it manually
+        if (refreshToken == null) {
+            jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (jakarta.servlet.http.Cookie cookie : cookies) {
+                    if ("refreshToken".equals(cookie.getName())) {
+                        refreshToken = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         var jwt = jwtService.parseToken(refreshToken);
         if (jwt == null || jwt.isExpired()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

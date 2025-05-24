@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
 @Getter
-public class UserUpdatePasswordDTO {
+public class UpdatePasswordDto {
     @NotBlank(message = "Old password is required.")
     private String oldPassword;
 

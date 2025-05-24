@@ -64,4 +64,9 @@ public class GlobalExceptionalHandler {
         ErrorResponse error = new ErrorResponse(HttpStatus.PAYLOAD_TOO_LARGE.value(), ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.PAYLOAD_TOO_LARGE);
     }
+
+    @ExceptionHandler(AdminOperationException.class)
+    public ResponseEntity<String> handleAdminOperationException(AdminOperationException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 }
