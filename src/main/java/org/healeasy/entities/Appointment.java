@@ -33,4 +33,22 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AppointmentStatus status;
+
+    @Column(name = "zoom_meeting_id")
+    private String zoomMeetingId;
+
+    @Column(name = "zoom_join_url")
+    private String zoomJoinUrl;
+
+    @Column(name = "zoom_start_url")
+    private String zoomStartUrl;
+
+    @Column(name = "zoom_password")
+    private String zoomPassword;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes = 30; // Default duration of 30 minutes
+
+    @Column(name = "description")
+    private String description;
 }

@@ -6,6 +6,17 @@ spring:
     username: postgres
     password: 270811OLC0802023
     driver-class-name: org.postgresql.Driver
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "orestengabo0@gmail.com"
+    password: "nlllsynivrxosirr"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,14 +26,27 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     baseline-on-migrate: true
-  server:
-    multipart:
-        enabled: true
-        max-file-size: 5MB
-        max_request_size: 7MB
   jwt:
     accessTokenExpiration: 7200
     refreshTokenExpiration: 604800
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 7MB
+
+app:
+  frontend-url: http://localhost:3000
+
+cloudinary:
+  cloud-name: dgrrbwpry
+  api-key: 263689889259677
+  api-secret: AIPKJj3i4yB83hoC-csLjWgF2MY
+
+zoom:
+  account-id: cDdrzSrgSCWmbvqSnZIwjA
+  client-id: zZkdNG_cSESFhtqqSlUOFg
+  client-secret: IxWRTD0G1TRS6T6XBrSyLg7OvzVlrDqK
 logging:
   level:
     org:

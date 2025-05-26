@@ -21,11 +21,12 @@ import java.util.regex.Pattern;
 public class CloudinaryServiceImpl implements ICloudinaryService {
     private final Cloudinary cloudinary;
     private final List<String> VALID_IMAGE_EXTENSIONS = List.of("jpg", "jpeg", "png", "webp");
+    private final List<String> VALID_DOCUMENT_EXTENSIONS = List.of("pdf", "doc", "docx", "txt", "rtf");
 
-    @Value("${spring.server.multipart.max-file-size}")
+    @Value("${spring.servlet.multipart.max-file-size}")
     private String maxFileSize;
 
-    @Value("${spring.server.multipart.max_request_size}")
+    @Value("${spring.servlet.multipart.max-request-size}")
     private String maxRequestSize;
 
     public CloudinaryServiceImpl(Cloudinary cloudinary) {
@@ -54,7 +55,42 @@ public class CloudinaryServiceImpl implements ICloudinaryService {
         if (fileName == null || VALID_IMAGE_EXTENSIONS.stream().noneMatch(fileName.toLowerCase()::endsWith)) {
             throw new InvalidFileTypeException("Invalid image format. Supported formats are: " + VALID_IMAGE_EXTENSIONS);
         }
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+            "resource_type", "auto"
+        ));
+        return uploadResult.get("url").toString();
+    }
+
+    @Override
+    public String uploadDocument(MultipartFile file) throws IOException {
+        if(file.getSize() > extractMBsFromStrSize(maxFileSize)) {
+            throw new LargeFileException("File size exceeds the limit of "+ maxFileSize);
+        }
+
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || 
+            (!file.getContentType().startsWith("image/") && 
+             !file.getContentType().startsWith("application/") && 
+             !file.getContentType().equals("text/plain"))) {
+            throw new InvalidFileTypeException("File type not supported. Must be an image or document");
+        }
+
+        // Check if it's a valid document extension
+        boolean isValidDocument = VALID_DOCUMENT_EXTENSIONS.stream()
+            .anyMatch(ext -> fileName.toLowerCase().endsWith(ext));
+
+        // Check if it's a valid image extension
+        boolean isValidImage = VALID_IMAGE_EXTENSIONS.stream()
+            .anyMatch(ext -> fileName.toLowerCase().endsWith(ext));
+
+        if (!isValidDocument && !isValidImage) {
+            throw new InvalidFileTypeException("Invalid file format. Supported formats are: " + 
+                VALID_IMAGE_EXTENSIONS + " and " + VALID_DOCUMENT_EXTENSIONS);
+        }
+
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+            "resource_type", "auto"
+        ));
         return uploadResult.get("url").toString();
     }
 
