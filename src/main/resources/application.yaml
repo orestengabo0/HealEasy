@@ -2,9 +2,9 @@ spring:
   application:
     name: HealEasy
   datasource:
-    url: jdbc:postgresql://localhost:5432/healEasyApp
-    username: postgres
-    password: 270811OLC0802023
+    url: jdbc:postgresql://healeasy_user:8xj4jFXz1OWRu85LKN0AzPJalhnPbHA6@dpg-da0r5ulg1s2s73c91k6g-a/healeasy
+    username: healeasy_user
+    password: 8xj4jFXz1OWRu85LKN0AzPJalhnPbHA6
     driver-class-name: org.postgresql.Driver
   mail:
     host: smtp.gmail.com
